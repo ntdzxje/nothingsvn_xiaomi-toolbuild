@@ -890,7 +890,6 @@ apply_miui_services_signature_patches() {
   log "Signature verification patches applied to miui-services.jar (Android 16)"
 }
 
-tification``
 # Apply disable secure flag patches to miui-services.jar (Android 16)
 apply_miui_services_disable_secure_flag() {
   local decompile_dir="$1"
