@@ -9,6 +9,9 @@ source "${SCRIPT_DIR}/helper.sh"
 # Create backup directory
 mkdir -p "$BACKUP_DIR"
 
+# API level for baksmali/smali v2
+API_LEVEL=36
+
 # ============================================
 # Feature Flags (set by command-line arguments)
 # ============================================
