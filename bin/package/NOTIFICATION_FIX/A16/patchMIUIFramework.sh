@@ -91,15 +91,9 @@ miui-framework() {
     jar_util d "miui-framework.jar" fw
 
     search="Lmiui/os/Build;->IS_INTERNATIONAL_BUILD:Z"
-    replace="Lmiui/os/Buildv2;->IS_OPENSOURCE_BUILD:Z"
+    replace="Lmiui/os/Build;->IS_MIUI:Z"
     
     find_and_replace "$search" "$replace"
-
-    find_and_replace "ro.product.mod_device" "ro.product.xmregion"
-
-    find_and_replace "CN" ""
-
-    cp -rf "$work_dir/bin/package/NOTIFICATION_FIX/smali/" "$work_dir/jar_temp/miui-framework.jar.out/smali/"
 
     jar_util a "miui-framework.jar" 
 }
