@@ -4,13 +4,42 @@ import os
 from re import sub
 from difflib import SequenceMatcher
 
-fix_permission = {"/vendor/bin/hw/android.hardware.wifi@1.0": "u:object_r:hal_wifi_default_exec:s0"}
+fix_permission = {
+    "/vendor/bin/hw/android.hardware.wifi@1.0":           "u:object_r:hal_wifi_default_exec:s0",
+    "/vendor/bin/hw/vendor.qti.camera.provider-service_64": "u:object_r:hal_camera_default_exec:s0",
+    "/system/system/bin/init":                            "u:object_r:init_exec:s0",
+    "/system_ext/xbin/xeu_toolbox":                       "u:object_r:xeu_toolbox_exec:s0",
+    "/vendor/lib64/hw/camera.qcom.core.so":               "u:object_r:same_process_hal_file:s0",
+    "/vendor/lib64/hw/camera.qcom.so":                    "u:object_r:same_process_hal_file:s0",
+    "/vendor/lib64/hw/com.qti.chi.override.so":           "u:object_r:same_process_hal_file:s0",
+    "/vendor/lib64/libchicore.so":                        "u:object_r:same_process_hal_file:s0",
+    "/vendor/lib64/libchilog.so":                         "u:object_r:same_process_hal_file:s0",
+    "/vendor/lib64/libmicamera_adapter.so":               "u:object_r:same_process_hal_file:s0",
+    "/vendor/lib64/libmicamera_hal_core.so":              "u:object_r:same_process_hal_file:s0",
+    "/vendor/lib64/libmicamera_aidl_provider.so":         "u:object_r:same_process_hal_file:s0",
+    "/vendor/lib64/com.qti.feature2.gs.sm8850.so":        "u:object_r:same_process_hal_file:s0",
+}
+
+
+
+def get_fix_permission(path: str):
+    result = None
+    if path in fix_permission:
+        result = fix_permission[path]
+    else:
+        for key, perm in fix_permission.items():
+            if key.endswith('/') and path.startswith(key):
+                result = perm
+                break
+    if isinstance(result, str):
+        return [result]
+    return result
 
 
 def scan_context(file) -> dict:  # 读取context文件返回一个字典
     context = {}
     with open(file, "r", encoding='utf-8') as file_:
-        for i in file_.readlines():
+        for i in file_.readlines(): 
             filepath, *other = i.strip().replace('\\', '').split()
             context[filepath] = other
             if len(other) > 1:
@@ -55,8 +84,8 @@ def context_patch(fs_file, dir_path) -> tuple:  # 接收两个字典对比
             if r_new_fs.get(i):
                 continue
             if i:
-                if i in fix_permission.keys():
-                    permission = fix_permission[i]
+                if (fixed := get_fix_permission(i)):
+                    permission = fixed
                 else:
                     for e in fs_file.keys():
                         if SequenceMatcher(None, (path := os.path.dirname(i)), e).quick_ratio() >= 0.85:
