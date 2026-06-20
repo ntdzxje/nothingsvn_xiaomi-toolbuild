@@ -18,29 +18,36 @@ isMiuiSystemUIDIR=$(find "$MAIN_FOLDER" -type d -name "MiuiSystemUI")
 isMiuiSystemUI=$(find "$MAIN_FOLDER" -type f -name "MiuiSystemUI.apk")
 $APKEDITOR d -t raw -f -no-dex-debug -i $isMiuiSystemUI -o $work_dir/apk_temp/isMiuiSystemUI.apk.out >/dev/null 2>&1
 FOLDER="$work_dir/apk_temp/isMiuiSystemUI.apk.out"
+find_and_replace() {
+    local search=$1
+    local replace=$2
+    local base_dir=$FOLDER
+    local files=(
+        "QSTileHost.smali"
+        "MiuiNotificationInterruptStateProviderImpl.smali"
+        "NotificationUtil.smali"
+        "MiuiOperatorCustomizedPolicy.smali"
+        "MiuiBaseNotifUtil.smali"
+        "NotificationSettingsManager.smali"
+        "MiuiCarrierTextController.smali"
+        "MiuiCellularIconVM\$special\$\$inlined\$combine\$1\$3.smali"
+        "MiuiMobileIconBinder\$bind\$1\$1\$10.smali"
+        "MiuiMobileIconBinder\$bind\$1\$1.smali"
+    )
 
-patch_noti() {
-  local smali_dir="$FOLDER"
-  local class="
-$smali_dir/classes*/com/android/systemui/qs/QSTileHost.smali
-$smali_dir/classes*/com/android/systemui/statusbar/notification/interruption/MiuiNotificationInterruptStateProviderImpl.smali
-$smali_dir/classes*/com/android/systemui/statusbar/notification/utils/NotificationUtil.smali
-$smali_dir/classes*/com/android/systemui/MiuiOperatorCustomizedPolicy.smali
-$smali_dir/classes*/com/miui/systemui/notification/MiuiBaseNotifUtil.smali
-$smali_dir/classes*/com/miui/systemui/notification/NotificationSettingsManager.smali
-$smali_dir/classes*/com/android/systemui/statusbar/policy/MiuiCarrierTextController.smali
-$smali_dir/classes*/com/android/systemui/statusbar/pipeline/mobile/ui/viewmodel/MiuiCellularIconVM\$special\$\$inlined\$combine\$1\$3.smali
-$smali_dir/classes*/com/android/systemui/statusbar/pipeline/mobile/ui/binder/MiuiMobileIconBinder\$bind\$1\$1\$10.smali
-$smali_dir/classes*/com/android/systemui/statusbar/pipeline/mobile/ui/binder/MiuiMobileIconBinder\$bind\$1\$1.smali
-"
-  for i in $class; do
-    [ -f "$i" ] || continue
-    sed -i -E 's|(sget-boolean[[:space:]]+)([vp][0-9]+),[[:space:]]+Lmiui/os/Build;->IS_INTERNATIONAL_BUILD:Z|\1\2, Lmiui/os/xBuild;->IS_INTERNATIONAL_BUILD:Z|g' "$i"
-    sed -i -E 's|(sget-boolean[[:space:]]+)([vp][0-9]+),[[:space:]]+Lcom/miui/utils/configs/MiuiConfigs;->IS_INTERNATIONAL_BUILD:Z|\1\2, Lmiui/os/xBuild;->IS_INTERNATIONAL_BUILD:Z|g' "$i"
-  done
-}
+    for file in "${files[@]}"; do
+        file_path=$(find "$base_dir" -name "$file")
+        if [[ -n $file_path ]]; then
+            if grep -q "$search" "$file_path"; then
+                sed -i "s|$search|$replace|g" "$file_path"
+            fi
+        fi
+    done
+} 
 
-patch_noti
+  find_and_replace "Lmiui/os/Build;->IS_INTERNATIONAL_BUILD:Z" "Lmiui/os/xBuild;->IS_INTERNATIONAL_BUILD:Z"
+  find_and_replace "Lcom/miui/utils/configs/MiuiConfigs;->IS_INTERNATIONAL_BUILD:Z" "Lmiui/os/xBuild;->IS_INTERNATIONAL_BUILD:Z"
+
 
 #Finishing
 MiuiSystemUI=$(basename $isMiuiSystemUI)
